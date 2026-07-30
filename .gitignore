@@ -431,3 +431,4 @@ FodyWeavers.xsd
 __pycache__/
 views/
 main.py
+database/data.json
