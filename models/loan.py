@@ -4,7 +4,7 @@ from datetime import date
 
 import database.db as db
 
-DUE_DATE_LIMIT = 30 # Em dias
+DUE_DATE_LIMIT = 31 # Em dias
 
 VALID_STATUSES  = ("active", "expired")
 STATUS_LABELS = {
@@ -26,15 +26,15 @@ class Loan:
     def validate(self) -> None:
         if self.status not in VALID_STATUSES:
             raise ValueError(f"Status inválido: {self.status!r}. Use: {VALID_STATUSES}")
-        if self.due_date and (self.due_date - date.today()).days > DUE_DATE_LIMIT:
-            raise ValueError(f"A data de vencimento ultrapassa o limite de {DUE_DATE_LIMIT} dias")
-        if Loan.has_occurrence(self.user_id, self.book_id):
-            raise ValueError(f"O empréstimo já existe")
-
+        if self.due_date and self.created_at:
+            days = (self.due_date - date.strptime(self.created_at, db.DATE_FORMAT)).days
+            if days > DUE_DATE_LIMIT:
+                raise ValueError(f"A data de vencimento ultrapassa o limite de {DUE_DATE_LIMIT} dias")
+        
     # ── Persistência ─────────────────────────────────────────────
     def save(self) -> "Loan":
         self.validate()
-        due = self.due_date.isoformat() if self.due_date else None
+        due = self.due_date.strftime("%d/%m/%Y, 23:59:59") if self.due_date else None
         if self.id is None:
             self.id = db.write("loans", {
                 "user_id": self.user_id,
@@ -80,6 +80,7 @@ class Loan:
 
     @classmethod
     def has_occurrence(cls, user_id: int, book_id: int) -> bool:
+        '''Checa se há empréstimos associados ao usuário e livro especificados'''
         loans = cls.all()
         for loan in loans:
             if user_id == loan.user_id and book_id == loan.book_id:
@@ -148,5 +149,6 @@ class Loan:
             user_id=data["user_id"],
             book_id=data["book_id"],
             status=data["status"],
-            due_date=data["due_date"]
+            due_date=data["due_date"],
+            created_at=data["created_at"]
         )

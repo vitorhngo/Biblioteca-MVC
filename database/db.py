@@ -6,6 +6,8 @@ DATA_DIR = Path(__file__).parent
 DATA_DIR.mkdir(exist_ok=True)
 JSON_FILE = DATA_DIR / "data.json"
 
+DATE_FORMAT = "%d/%m/%Y, %H:%M:%S"
+
 data_template = {
     "lastrowid": 0,
     "users": {},

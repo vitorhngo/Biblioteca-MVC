@@ -4,6 +4,7 @@ from typing import Optional
 import database.db as db
 import datamodels.exceptions as exc
 import datamodels.enums as Enum
+
 from models.loan import Loan
 
 @dataclass
@@ -51,31 +52,45 @@ class Book:
         )
         return self
 
-    def delete(self) -> Enum.DeleteResult:
+    def delete(self):# -> Enum.DeleteResult:
         if self.id is None:
             raise RuntimeError("Livro não foi salvo ainda.")
-        if Loan.all_active_for_book(self.id):
-            self.deactivate()
-            return Enum.DeleteResult.DEACTIVATED
+        #if Loan.all_active_for_book(self.id):
+        #    self.deactivate()
+        #    return Enum.DeleteResult.DEACTIVATED
         db.delete("books", self.id)
         self.id = None
-        return Enum.DeleteResult.DELETED
+        #return Enum.DeleteResult.DELETED
 
     def deactivate(self) -> None:
         if self.id is None:
             raise RuntimeError("Livro não foi salvo ainda.")
-        
         if self.active == False: return
         self.active = False
         self.save()
 
+    def decrease_amount(self):
+        if self is None:
+            raise ValueError("O livro não foi encontrado")
+        if self.amount < 1: return
+        self.amount -= 1
+        
     # ── Consultas ─────────────────────────────────────────────────
     @classmethod
     def is_available(cls, book_id: int) -> bool:
+        """Verifica se o livro especificado tem quantidade suficiente ou está ativo"""
         book = cls.find_by_id(book_id)
         if book is None:
             raise ValueError("O livro não foi encontrado")
-        return book.amount > 0
+        return book.amount > 0 or book.active
+
+    #@classmethod
+    #def decrease_amount(cls, book_id: int) -> None:
+    #    book = cls.find_by_id(book_id)
+    #    if book is None:
+    #        raise ValueError("O livro não foi encontrado")
+    #    if book.amount < 1: return
+    #    book.amount -= 1
 
     @classmethod
     def find_by_id(cls, book_id: int) -> Optional["Book"]:
