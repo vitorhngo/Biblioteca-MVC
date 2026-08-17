@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import date
 
 import database.db as db
+from datamodels.exceptions import DomainError
 
 DUE_DATE_LIMIT = 31 # Em dias
 
@@ -25,11 +26,13 @@ class Loan:
     # ── Validação ────────────────────────────────────────────────
     def validate(self) -> None:
         if self.status not in VALID_STATUSES:
-            raise ValueError(f"Status inválido: {self.status!r}. Use: {VALID_STATUSES}")
+            raise DomainError(f"Status inválido: {self.status!r}. Use: {VALID_STATUSES}")
         if self.due_date and self.created_at:
             days = (self.due_date - date.strptime(self.created_at, db.DATE_FORMAT)).days
             if days > DUE_DATE_LIMIT:
-                raise ValueError(f"A data de vencimento ultrapassa o limite de {DUE_DATE_LIMIT} dias")
+                raise DomainError(f"A data de vencimento ultrapassa o limite de {DUE_DATE_LIMIT} dias")
+            if self.due_date < date.strptime(self.created_at, db.DATE_FORMAT):
+                raise DomainError(f"A data de vencimento não pode ser menor que a data de criação do empréstimo")
         
     # ── Persistência ─────────────────────────────────────────────
     def save(self) -> "Loan":

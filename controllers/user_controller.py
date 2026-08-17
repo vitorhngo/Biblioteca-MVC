@@ -2,6 +2,8 @@
 from typing import Optional
 from models.user import User
 
+from services.loan_service import LoanService
+
 class UserController:
     # ── Criação ───────────────────────────────────────────────────
     def create(
@@ -44,8 +46,8 @@ class UserController:
     
     # ── Remoção ───────────────────────────────────────────────────
     def delete(self, user_id: int) -> dict:
-        user = User.find_by_id(user_id)
-        if user is None:
-            return {"success": False, "error": f"Usuário #{user_id} não encontrado."}
-        result = user.delete()
-        return {"success": True, "data": f"Usuário #{user_id} {result.value} com sucesso."}
+        try:
+            result = LoanService().remove_user(user_id)
+            return {"success": True, "data": f"Usuário #{user_id} {result.value} com sucesso."}
+        except Exception as exc:
+            return {"success": False, "error": str(exc)}

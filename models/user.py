@@ -7,10 +7,6 @@ from typing import Optional
 import re
 
 import database.db as db
-import datamodels.exceptions as exc
-import datamodels.enums as Enum
-
-from models.loan import Loan
 
 @dataclass
 class User:
@@ -47,15 +43,11 @@ class User:
         )
         return self
 
-    def delete(self) -> Enum.DeleteResult:
+    def delete(self):
         if self.id is None:
             raise RuntimeError("Usuário não foi salvo ainda.")
-        if Loan.all_active_for_user(self.id):
-            self.deactivate()
-            return Enum.DeleteResult.DEACTIVATED
         db.delete("users", self.id)
         self.id = None
-        return Enum.DeleteResult.DELETED
 
     def deactivate(self) -> None:
         if self.id is None:

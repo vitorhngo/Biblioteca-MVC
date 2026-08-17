@@ -432,3 +432,4 @@ __pycache__/
 views/
 main.py
 database/data.json
+debug/

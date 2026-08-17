@@ -1,10 +1,11 @@
 from datetime import date
-from typing import Optional
+
+from datamodels.exceptions import DomainError
+
 from models.loan import Loan, DUE_DATE_LIMIT
 from models.user import User
 from models.book import Book
-
-MAX_LOAN_PER_USER = 5
+from services.loan_service import LoanService
 
 class LoanController:
     '''Representação abstrata de um empréstimo'''
@@ -14,26 +15,11 @@ class LoanController:
         book_id: int,
         due_date: date
     ) -> dict:
-        if User.find_by_id(user_id) is None:
-            return {"success": False, "error": f"Usuário #{user_id} não encontrado."}
-        if Book.find_by_id(book_id) is None:
-            return {"success": False, "error": f"Livro #{user_id} não encontrado."}
-        if not Book.is_available(book_id):
-            return {"success": False, "error": f"O Livro #{book_id} não está disponível para empréstimo"}
-        if len(Loan.all_for_user(user_id)) >= MAX_LOAN_PER_USER:
-            return {"success": False, "error": f"O usuário chegou no limite de empréstimos: {MAX_LOAN_PER_USER}"}
-        if Loan.has_occurrence(user_id, book_id):
-            return {"success": False, "error": f"O empréstimo já existe"}
         try:
-            loan = Loan(
-                user_id=user_id,
-                book_id=book_id,
-                due_date=due_date
-            ).save()
-            Book.decrease_amount(book_id)
+            loan = LoanService().create_loan(book_id, user_id, due_date)
             return {"success": True, "data": loan}
-        except ValueError as exc:
-            return {"success": False, "error": str(exc)}
+        except DomainError as e:
+            return {"success": False, "error": e}
 
     def update(self, loan_id: int, due_date: date) -> dict:
         loan = Loan.find_by_id(loan_id)
@@ -43,8 +29,8 @@ class LoanController:
         try:
             loan.save()
             return {"success": True, "data": loan}
-        except ValueError as exc:
-            return {"success": False, "error": str(exc)}
+        except DomainError as e:
+            return {"success": False, "error": e}
 
     # ── Leitura ───────────────────────────────────────────────────
     def get_by_id(self, loan_id: int) -> dict:
@@ -66,6 +52,6 @@ class LoanController:
     def delete(self, loan_id: int) -> dict:
         loan = Loan.find_by_id(loan_id)
         if loan is None:
-            return {"success": False, "error": f"Tarefa #{loan_id} não encontrada."}
+            return {"success": False, "error": f"Empréstimo #{loan_id} não encontrado."}
         loan.delete()
-        return {"success": True, "data": f"Tarefa #{loan_id} removida com sucesso."}
+        return {"success": True, "data": f"Empréstimo #{loan_id} removido com sucesso."}

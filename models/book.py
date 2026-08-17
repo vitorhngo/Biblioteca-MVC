@@ -2,10 +2,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 import database.db as db
-import datamodels.exceptions as exc
-import datamodels.enums as Enum
-
-from models.loan import Loan
 
 @dataclass
 class Book:
@@ -13,7 +9,7 @@ class Book:
     title: str
     author: str
     year: int
-    image: str
+    image = None
     amount: int
     active: bool = True
     id: Optional[int] = None
@@ -52,15 +48,11 @@ class Book:
         )
         return self
 
-    def delete(self):# -> Enum.DeleteResult:
+    def delete(self):
         if self.id is None:
             raise RuntimeError("Livro não foi salvo ainda.")
-        #if Loan.all_active_for_book(self.id):
-        #    self.deactivate()
-        #    return Enum.DeleteResult.DEACTIVATED
         db.delete("books", self.id)
         self.id = None
-        #return Enum.DeleteResult.DELETED
 
     def deactivate(self) -> None:
         if self.id is None:
@@ -84,14 +76,6 @@ class Book:
             raise ValueError("O livro não foi encontrado")
         return book.amount > 0 or book.active
 
-    #@classmethod
-    #def decrease_amount(cls, book_id: int) -> None:
-    #    book = cls.find_by_id(book_id)
-    #    if book is None:
-    #        raise ValueError("O livro não foi encontrado")
-    #    if book.amount < 1: return
-    #    book.amount -= 1
-
     @classmethod
     def find_by_id(cls, book_id: int) -> Optional["Book"]:
         data = db.get("books", book_id)
@@ -106,7 +90,6 @@ class Book:
             title=data["title"],
             author=data["author"],
             year=data["year"],
-            image=data["image"],
             amount=data["amount"],
             active=data["active"]
         )
