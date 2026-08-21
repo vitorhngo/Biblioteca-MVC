@@ -1,7 +1,6 @@
 from datetime import date
 
-import datamodels.exceptions as exc
-import datamodels.enums as enum
+import utils.exceptions as exc
 
 from models.user import User
 from models.book import Book
@@ -38,27 +37,3 @@ class LoanService:
             raise exc.LoanAlreadyExistsError()
 
         return user, book
-
-    def remove_book(self, book_id: int) -> enum.DeleteResult:
-        book = Book.find_by_id(book_id)
-        if book is None:
-            raise exc.BookNotFoundError()
-
-        if Loan.all_active_for_book(book_id):
-            book.deactivate()
-            return enum.DeleteResult.DEACTIVATED
-
-        book.delete()
-        return enum.DeleteResult.DELETED
-
-    def remove_user(self, user_id: int) -> enum.DeleteResult:
-        user = User.find_by_id(user_id)
-        if user is None:
-            raise exc.UserNotFoundError()
-
-        if Loan.all_active_for_user(user_id):
-            user.deactivate()
-            return enum.DeleteResult.DEACTIVATED
-
-        user.delete()
-        return enum.DeleteResult.DELETED

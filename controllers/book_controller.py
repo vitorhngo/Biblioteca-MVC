@@ -1,11 +1,10 @@
 '''Nunca retorna dados, somente relatórios: Deu certo? O que deu certo?'''
 
 from models.book import Book
-#from models.user import User
 
-from services.loan_service import LoanService
+from services.book_service import BookService
 
-import datamodels.exceptions as exc
+import utils.exceptions as exc
 
 class BookController:
 
@@ -26,13 +25,13 @@ class BookController:
                 amount=amount
             ).save()
             return {"success": True, "data": book}
-        except ValueError as exc:
-            return {"success": False, "error": str(exc)}
+        except exc.DomainError as e:
+            return {"success": False, "error": str(e)}
         
     # ── Remoção ───────────────────────────────────────────────────
     def delete(self, book_id: int) -> dict:
         try:
-            result = LoanService().remove_book(book_id)
+            result = BookService().remove(book_id)
             return {"success": True, "data": f"Livro #{book_id} {result.value} com sucesso."}
         except exc.BookNotFoundError:
             return {"success": False, "error": f"Livro #{book_id} não encontrado."}

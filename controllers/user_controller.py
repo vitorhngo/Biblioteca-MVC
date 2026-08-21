@@ -2,7 +2,8 @@
 from typing import Optional
 from models.user import User
 
-from services.loan_service import LoanService
+from services.user_service import UserService
+from utils.exceptions import DomainError
 
 class UserController:
     # ── Criação ───────────────────────────────────────────────────
@@ -16,7 +17,7 @@ class UserController:
         try:
             user = User(name=name.strip(), email=email.strip().lower()).save()
             return {"success": True, "data": user}
-        except ValueError as exc:
+        except DomainError as exc:
             return {"success": False, "error": str(exc)}
 
     # ── Leitura ───────────────────────────────────────────────────
@@ -41,13 +42,13 @@ class UserController:
         try:
             user.save()
             return {"success": True, "data": user}
-        except ValueError as exc:
+        except DomainError as exc:
             return {"success": False, "error": str(exc)}
     
     # ── Remoção ───────────────────────────────────────────────────
     def delete(self, user_id: int) -> dict:
         try:
-            result = LoanService().remove_user(user_id)
+            result = UserService().remove(user_id)
             return {"success": True, "data": f"Usuário #{user_id} {result.value} com sucesso."}
         except Exception as exc:
             return {"success": False, "error": str(exc)}

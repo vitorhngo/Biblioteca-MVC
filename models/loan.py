@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import date
 
 import database.db as db
-from datamodels.exceptions import DomainError
+from utils.exceptions import DomainError
 
 DUE_DATE_LIMIT = 31 # Em dias
 
@@ -51,7 +51,7 @@ class Loan:
                 "user_id": self.user_id,
                 "book_id": self.book_id,
                 "status": self.status,
-                "due_date": due #POSSÍVEL ERRO!
+                "due_date": due
             }
         )
         return self

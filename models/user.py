@@ -7,6 +7,7 @@ from typing import Optional
 import re
 
 import database.db as db
+import utils.exceptions as exc
 
 @dataclass
 class User:
@@ -19,9 +20,9 @@ class User:
     # ── Validação ────────────────────────────────────────────────
     def validate(self) -> None:
         if not self.name.strip():
-            raise ValueError("Nome não pode ser vazio.")
+            raise exc.DomainError("Nome não pode ser vazio.")
         if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email):
-            raise ValueError(f"E-mail inválido: {self.email!r}")
+            raise exc.DomainError(f"E-mail inválido: {self.email!r}")
 
     # ── Persistência ─────────────────────────────────────────────
     def save(self) -> "User":

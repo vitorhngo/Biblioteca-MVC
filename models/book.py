@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import database.db as db
+import utils.exceptions as exc
 
 @dataclass
 class Book:
@@ -19,9 +20,9 @@ class Book:
     # ── Validação ────────────────────────────────────────────────
     def validate(self):
         if not self.title.strip():
-            raise ValueError("Título não pode ser vazio.")
+            raise exc.DomainError("Título não pode ser vazio.")
         if not len(str(self.year)) == 4 :
-            raise ValueError("Ano inválido.")
+            raise exc.DomainError("Ano inválido.")
 
     # ── Persistência ─────────────────────────────────────────────
     def save(self) -> "Book":
@@ -62,18 +63,29 @@ class Book:
         self.save()
 
     def decrease_amount(self):
-        if self is None:
-            raise ValueError("O livro não foi encontrado")
         if self.amount < 1: return
         self.amount -= 1
-        
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "author": self.author,
+            "year": self.year,
+            "image": self.image,
+            "amount": self.amount,
+            "active": self.active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+    
     # ── Consultas ─────────────────────────────────────────────────
     @classmethod
     def is_available(cls, book_id: int) -> bool:
         """Verifica se o livro especificado tem quantidade suficiente ou está ativo"""
         book = cls.find_by_id(book_id)
         if book is None:
-            raise ValueError("O livro não foi encontrado")
+            raise exc.BookNotFoundError()
         return book.amount > 0 or book.active
 
     @classmethod

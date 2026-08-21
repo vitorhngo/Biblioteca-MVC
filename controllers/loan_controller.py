@@ -1,6 +1,6 @@
 from datetime import date
 
-from datamodels.exceptions import DomainError
+from utils.exceptions import DomainError
 
 from models.loan import Loan, DUE_DATE_LIMIT
 from models.user import User
