@@ -1,37 +1,30 @@
-'''Nunca retorna dados, somente relatórios: Deu certo? O que deu certo?'''
+from typing import Optional
 
-from models.book import Book
+from utils.exceptions import DomainError, BookNotFoundError
 
 from services.book_service import BookService
 
-import utils.exceptions as exc
-
 class BookController:
-
     # ── Criação ───────────────────────────────────────────────────
+    @staticmethod
     def create(
-        self,
         title: str, 
         author: str, 
         year: int,
-        image = None,
+        image: Optional[str] = None,
         amount: int = 1
     ) -> dict:
         try:
-            book = Book(
-                title=title.strip(), 
-                author=author.strip(), 
-                year=year,
-                amount=amount
-            ).save()
-            return {"success": True, "data": book}
-        except exc.DomainError as e:
+            result = BookService().create(title=title, author=author, year=year, image=image, amount=amount)
+            return {"success": True, "data": result}
+        except DomainError as e:
             return {"success": False, "error": str(e)}
         
     # ── Remoção ───────────────────────────────────────────────────
-    def delete(self, book_id: int) -> dict:
+    @staticmethod
+    def delete(book_id: int) -> dict:
         try:
             result = BookService().remove(book_id)
             return {"success": True, "data": f"Livro #{book_id} {result.value} com sucesso."}
-        except exc.BookNotFoundError:
+        except BookNotFoundError:
             return {"success": False, "error": f"Livro #{book_id} não encontrado."}

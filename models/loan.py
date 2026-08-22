@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from typing import Optional
 from datetime import date
 
-import database.db as db
 from utils.exceptions import DomainError
+from utils.constants import DUE_DATE_LIMIT, DB_DATE_FORMAT
 
-DUE_DATE_LIMIT = 31 # Em dias
+from repositories.loan_repository import LoanRepository
 
 VALID_STATUSES  = ("active", "expired")
 STATUS_LABELS = {
@@ -28,38 +28,21 @@ class Loan:
         if self.status not in VALID_STATUSES:
             raise DomainError(f"Status inválido: {self.status!r}. Use: {VALID_STATUSES}")
         if self.due_date and self.created_at:
-            days = (self.due_date - date.strptime(self.created_at, db.DATE_FORMAT)).days
+            days = (self.due_date - date.strptime(self.created_at, DB_DATE_FORMAT)).days
             if days > DUE_DATE_LIMIT:
                 raise DomainError(f"A data de vencimento ultrapassa o limite de {DUE_DATE_LIMIT} dias")
-            if self.due_date < date.strptime(self.created_at, db.DATE_FORMAT):
+            if self.due_date < date.strptime(self.created_at, DB_DATE_FORMAT):
                 raise DomainError(f"A data de vencimento não pode ser menor que a data de criação do empréstimo")
         
-    # ── Persistência ─────────────────────────────────────────────
-    def save(self) -> "Loan":
+    def register(self):
         self.validate()
-        due = self.due_date.strftime("%d/%m/%Y, 23:59:59") if self.due_date else None
-        if self.id is None:
-            self.id = db.write("loans", {
-                "user_id": self.user_id,
-                "book_id": self.book_id,
-                "status": self.status,
-                "due_date": due
-            }
-        )
-        else:
-            db.update("loans", self.id, {
-                "user_id": self.user_id,
-                "book_id": self.book_id,
-                "status": self.status,
-                "due_date": due
-            }
-        )
+        LoanRepository.save(self)
         return self
     
     def delete(self) -> None:
         if self.id is None:
             raise RuntimeError("Empréstimo não foi salvo ainda.")
-        db.delete("loans", self.id)
+        LoanRepository.delete(self)
         self.id = None
 
     # ── Propriedades de conveniência ──────────────────────────────
@@ -78,80 +61,52 @@ class Loan:
     # ── Consultas ─────────────────────────────────────────────────
     @classmethod
     def find_by_id(cls, loan_id: int) -> Optional["Loan"]:
-        data = db.get("loans", loan_id)
-        return cls._from_data(data) if data else None
+        """Busca um empréstimo pelo seu ID. Retorna None se não encontrado."""
+        data = LoanRepository.find_by_id(loan_id)
+        return cls(**data) if data else None
 
     @classmethod
     def has_occurrence(cls, user_id: int, book_id: int) -> bool:
-        '''Checa se há empréstimos associados ao usuário e livro especificados'''
-        loans = cls.all()
-        for loan in loans:
-            if user_id == loan.user_id and book_id == loan.book_id:
-                return True
-        return False
+        """Checa se há empréstimos associados ao usuário e livro especificados"""
+        data = LoanRepository.all(
+            filter_expression=lambda loan: loan["user_id"] == user_id and loan["book_id"] == book_id
+        )
+        return len(data) > 0
     
     @classmethod
     def all(cls) -> list[Loan]:
-        '''Retorna uma lista de empréstimos'''
-        loans = []
-        for k, v in db.read().items():
-            if not type(v).__name__ == "dict": continue
-            if not k == "loans": continue
-            for _, loan in v.items():
-                if loan is None: continue
-                loans.append(loan)
-        return [cls._from_data(l) for l in loans]
+        """Retorna uma lista de empréstimos"""
+        data = LoanRepository.all()
+        return [cls(**loan) for loan in data]
 
     @classmethod
     def all_for_user(cls, user_id: int) -> list[Loan]:
-        '''Retorna uma lista de empréstimos do usuário especificado'''
-        loans = []
-        for k, v in db.read().items():
-            if not type(v).__name__ == "dict": continue
-            if not k == "loans": continue
-            for _, loan in v.items():
-                if loan is None: continue
-                if loan["user_id"] != user_id: continue
-                loans.append(loan)
-        return [cls._from_data(l) for l in loans]
+        """Retorna uma lista de empréstimos do usuário especificado"""
+        data = LoanRepository.all(
+            filter_expression=lambda loan: loan["user_id"] == user_id
+        )
+        return [cls(**loan) for loan in data]
 
     @classmethod
     def all_active_for_user(cls, user_id: int) -> list[Loan]:
         '''Retorna uma lista de empréstimos ativos do usuário especificado'''
-        loans = []
-        for k, v in db.read().items():
-            if not type(v).__name__ == "dict": continue
-            if not k == "loans": continue
-            for _, loan in v.items():
-                if loan is None: continue
-                if loan["user_id"] != user_id: continue
-                if loan["status"] != "active": continue
-                loans.append(loan)
-        return [cls._from_data(l) for l in loans]
-    
+        data = LoanRepository.all(
+            filter_expression=lambda loan: loan["user_id"] == user_id and loan["status"] == "active"
+        )
+        return [cls(**loan) for loan in data]
+
+    @classmethod
+    def all_for_book(cls, book_id: int) -> list[Loan]:
+        """Retorna uma lista de empréstimos do livro especificado"""
+        data = LoanRepository.all(
+            filter_expression=lambda loan: loan["book_id"] == book_id
+        )
+        return [cls(**loan) for loan in data]
+
     @classmethod
     def all_active_for_book(cls, book_id: int) -> list[Loan]:
         '''Retorna uma lista de empréstimos ativos do livro especificado'''
-        loans = []
-        for k, v in db.read().items():
-            if not type(v).__name__ == "dict": continue
-            if not k == "loans": continue
-            for _, loan in v.items():
-                if loan is None: continue
-                if loan["book_id"] != book_id: continue
-                if loan["status"] != "active": continue
-                loans.append(loan)
-        return [cls._from_data(l) for l in loans]
-    
-    # ── Auxiliar ──────────────────────────────────────────────────
-    @classmethod
-    def _from_data(cls, data) -> "Loan":
-        '''Reconstrói o objeto com dados vindos do banco'''
-        return cls(
-            id=data["id"],
-            user_id=data["user_id"],
-            book_id=data["book_id"],
-            status=data["status"],
-            due_date=data["due_date"],
-            created_at=data["created_at"]
+        data = LoanRepository.all(
+            filter_expression=lambda loan: loan["book_id"] == book_id and loan["status"] == "active"
         )
+        return [cls(**loan) for loan in data]

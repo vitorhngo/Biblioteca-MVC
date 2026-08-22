@@ -1,58 +1,38 @@
 from dataclasses import dataclass
 from typing import Optional
 
-import database.db as db
-import utils.exceptions as exc
+from utils.exceptions import DomainError, BookNotFoundError
+
+from repositories.book_repository import BookRepository
 
 @dataclass
 class Book:
-    '''Representação abstrata de um livro'''
     title: str
     author: str
     year: int
-    image = None
     amount: int
     active: bool = True
     id: Optional[int] = None
+    image: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
-    # ── Validação ────────────────────────────────────────────────
+    # ── Úteis ────────────────────────────────────────────────
     def validate(self):
         if not self.title.strip():
-            raise exc.DomainError("Título não pode ser vazio.")
+            raise DomainError("Título não pode ser vazio.")
         if not len(str(self.year)) == 4 :
-            raise exc.DomainError("Ano inválido.")
+            raise DomainError("Ano inválido.")
 
-    # ── Persistência ─────────────────────────────────────────────
-    def save(self) -> "Book":
+    def register(self):
         self.validate()
-        if self.id is None:
-            self.id = db.write("books", {
-            "title": self.title,
-            "author": self.author,
-            "year": self.year,
-            "image": self.image,
-            "amount": self.amount,
-            "active": self.active
-            }
-        )
-        else:
-            db.update("books", self.id, {
-            "title": self.title,
-            "author": self.author,
-            "year": self.year,
-            "image": self.image,
-            "amount": self.amount,
-            "active": self.active,
-            }
-        )
+        BookRepository.save(self)
         return self
 
     def delete(self):
         if self.id is None:
             raise RuntimeError("Livro não foi salvo ainda.")
-        db.delete("books", self.id)
+        BookRepository.delete(self)
         self.id = None
 
     def deactivate(self) -> None:
@@ -60,48 +40,20 @@ class Book:
             raise RuntimeError("Livro não foi salvo ainda.")
         if self.active == False: return
         self.active = False
-        self.save()
+        BookRepository.save(self)
 
     def decrease_amount(self):
         if self.amount < 1: return
         self.amount -= 1
 
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "title": self.title,
-            "author": self.author,
-            "year": self.year,
-            "image": self.image,
-            "amount": self.amount,
-            "active": self.active,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
-    
     # ── Consultas ─────────────────────────────────────────────────
     @classmethod
     def is_available(cls, book_id: int) -> bool:
         """Verifica se o livro especificado tem quantidade suficiente ou está ativo"""
-        book = cls.find_by_id(book_id)
+        book_data = BookRepository.find_by_id(book_id)
+        if book_data is None:
+            raise BookNotFoundError()
+        book = cls(**book_data)
         if book is None:
-            raise exc.BookNotFoundError()
+            raise BookNotFoundError()
         return book.amount > 0 or book.active
-
-    @classmethod
-    def find_by_id(cls, book_id: int) -> Optional["Book"]:
-        data = db.get("books", book_id)
-        return cls._from_data(data) if data else None
-
-    # ── Auxiliar ──────────────────────────────────────────────────
-    @classmethod
-    def _from_data(cls, data) -> "Book":
-        '''Reconstrói o objeto com dados vindos do banco'''
-        return cls(
-            id=data["id"],
-            title=data["title"],
-            author=data["author"],
-            year=data["year"],
-            amount=data["amount"],
-            active=data["active"]
-        )
