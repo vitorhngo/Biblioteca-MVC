@@ -2,6 +2,8 @@
 SERVICE: BookService
 Responsável por coordenar a lógica de negócio do livro, interagindo com o repositório e o modelo.
 """
+from typing import Optional
+
 from utils import enums
 from utils.exceptions import BookNotFoundError
 
@@ -19,6 +21,7 @@ class BookService:
             amount: int = 1,
             image = None
         ) -> Book:
+        """Cria um novo livro coordenando o fluxo de persistência."""
         book = Book(
             title=title,
             author=author,
@@ -27,11 +30,31 @@ class BookService:
             image=image
         )
         book.validate()
+        book.format_data()
+        BookRepository.save(book)
+        return book
+
+    @staticmethod
+    def update(book_id: int, info_update: dict[str, any]) -> Book: # type: ignore
+        """Muda informações de um livro dinamicamente. Se o livro não existir, lança BookNotFoundError."""
+        data = BookRepository.find_by_id(book_id)
+        if data is None:
+            raise BookNotFoundError()
+
+        for key, value in data.items():
+            new_value = info_update.get(key)
+            if new_value is not None and new_value != value:
+                    data[key] = new_value
+
+        book = Book(**data)
+        book.validate()
+        book.format_data()
         BookRepository.save(book)
         return book
 
     @staticmethod
     def remove(book_id: int) -> enums.DeleteResult:
+        """Remove um livro do repositório. Se o livro não existir, lança BookNotFoundError."""
         data = BookRepository.find_by_id(book_id)
         if data is None:
             raise BookNotFoundError()

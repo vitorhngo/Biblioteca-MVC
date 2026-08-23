@@ -25,3 +25,8 @@ class User:
             raise DomainError("Nome não pode ser vazio.")
         if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email):
             raise DomainError(f"E-mail inválido: {self.email!r}")
+
+    def format_data(self) -> User:
+        self.name = self.name.strip()
+        self.email = self.email.strip().lower()
+        return self

@@ -24,6 +24,14 @@ class BookController:
         except DomainError as e:
             return {"success": False, "error": str(e)}
         
+    @staticmethod
+    def update(book_id: int, info_update: dict[str, any]) -> dict: # type: ignore
+        try:
+            result = BookService().update(book_id, info_update)
+            return {"success": True, "data": result}
+        except DomainError as e:
+            return {"success": False, "error": str(e)}
+        
     # ── Remoção ───────────────────────────────────────────────────
     @staticmethod
     def delete(book_id: int) -> dict:

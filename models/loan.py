@@ -36,6 +36,11 @@ class Loan:
             if self.due_date < date.strptime(self.created_at, DB_DATE_FORMAT):
                 raise DomainError(f"A data de vencimento não pode ser menor que a data de criação do empréstimo")
 
+    def format_data(self) -> Loan:
+        if self.due_date and isinstance(self.due_date, str):
+            self.due_date = date.strptime(self.due_date, DB_DATE_FORMAT)
+        return self
+
     # ── Propriedades de conveniência ──────────────────────────────
     @property
     def status_label(self) -> str:

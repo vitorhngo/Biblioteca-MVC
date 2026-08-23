@@ -2,10 +2,6 @@ class DomainError(Exception):
     """Classe-base para erros de regra de negócio do domínio."""
     pass
 
-class LoanActiveError(DomainError):
-    def __init__(self, *args: object):
-        super().__init__('Empréstimo ativo', *args)
-
 class LoanNotFoundError(DomainError):
     def __init__(self, *args: object):
         super().__init__('Empréstimo não encontrado', *args)
@@ -22,6 +18,10 @@ class BookNotFoundError(DomainError):
     def __init__(self, *args: object):
         super().__init__('Livro não encontrado', *args)
 
+class BookDeactiveError(DomainError):
+    def __init__(self, *args: object):
+        super().__init__('Livro está desativado', *args)
+
 class UserNotFoundError(DomainError):
     def __init__(self, *args: object):
         super().__init__('Usuário não encontrado', *args)
@@ -29,3 +29,7 @@ class UserNotFoundError(DomainError):
 class UserMaxLoansReachedError(DomainError):
     def __init__(self, *args: object):
         super().__init__('Usuário chegou no limite máximo de empréstimos permitido', *args)
+
+class UserDeactiveError(DomainError):
+    def __init__(self, *args: object):
+        super().__init__('Usuário está desativado', *args)

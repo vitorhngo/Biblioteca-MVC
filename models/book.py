@@ -34,6 +34,11 @@ class Book:
         if self.amount < 1: return
         self.amount -= 1
 
+    def format_data(self) -> Book:
+        self.title = self.title.strip()
+        self.author = self.author.strip()
+        return self
+
     # ── Consultas ─────────────────────────────────────────────────
     @classmethod
     def is_available(cls, book_id: int) -> bool:

@@ -9,6 +9,7 @@ from utils.constants import MAX_LOAN_PER_USER
 
 from repositories.loan_repository import LoanRepository
 from repositories.book_repository import BookRepository
+from repositories.user_repository import UserRepository
 
 from models.user import User
 from models.book import Book
@@ -17,7 +18,7 @@ from models.loan import Loan
 class LoanService:
     @staticmethod
     def create(book_id: int, user_id: int, due_date: date) -> Loan:
-        user, book = LoanService._validate_loan_request(book_id, user_id, due_date)
+        book = LoanService._validate_loan_request(book_id, user_id, due_date)
 
         #XXX: FALTA ATOMICIDADE: Se o save do loan falhar, o amount do livro não deve ser decrementado.
         loan = Loan(
@@ -26,6 +27,7 @@ class LoanService:
             due_date=due_date
         )
         loan.validate()
+        loan.format_data()
         LoanRepository.save(loan)
         
         book.amount -= 1
@@ -41,12 +43,13 @@ class LoanService:
         loan = Loan(**data)
         loan.due_date = due_date
         loan.validate()
+        loan.format_data()
         LoanRepository.save(loan)
         return loan
 
     @staticmethod
     def list_for_user(user_id: int) -> list[Loan]:
-        if User.find_by_id(user_id) is None:
+        if UserRepository.find_by_id(user_id) is None:
             raise exc.UserNotFoundError()
         return [Loan(**data) for data in LoanRepository.all_for_user(user_id)]
 
@@ -67,18 +70,22 @@ class LoanService:
         return len(data) > 0
 
     @staticmethod
-    def _validate_loan_request(book_id: int, user_id: int, due_date: date) -> tuple[User, Book]:
-        user = User.find_by_id(user_id)
-        if user is None or not user.active:
+    def _validate_loan_request(book_id: int, user_id: int, due_date: date) -> Book:
+        user_data = UserRepository.find_by_id(user_id)
+        if user_data is None:
             raise exc.UserNotFoundError()
+        if not user_data.get("active", True):
+            raise exc.UserDeactiveError()
 
         book_data = BookRepository.find_by_id(book_id)
         if book_data is None:
             raise exc.BookNotFoundError()
+        if not book_data.get("active", True):
+            raise exc.BookDeactiveError()
         
         book = Book(**book_data)
 
-        if book.amount <= 0 or not book.active:
+        if book.amount <= 0:
             raise exc.BookUnavailableError()
 
         if len(LoanRepository.all_for_user(user_id)) >= MAX_LOAN_PER_USER:
@@ -87,4 +94,4 @@ class LoanService:
         if LoanService.has_occurrence(user_id, book_id):
             raise exc.LoanAlreadyExistsError()
 
-        return user, book
+        return book

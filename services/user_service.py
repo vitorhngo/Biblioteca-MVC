@@ -23,21 +23,24 @@ class UserService:
             raise DomainError(f"E-mail {email!r} já cadastrado.")
         user = User(name=name, email=email)
         user.validate()
+        user.format_data()
         UserRepository.save(user)
         return user
 
     @staticmethod
-    def update(user_id: int, name: Optional[str], email: Optional[str]) -> User:
+    def update(user_id: int, info_update: dict[str, any]) -> User: # type: ignore
         data = UserRepository.find_by_id(user_id)
         if data is None:
             raise UserNotFoundError()
+
+        for key, value in data.items():
+            new_value = info_update.get(key)
+            if new_value is not None and new_value != value:
+                    data[key] = new_value
         
         user = User(**data)
-        if name:
-            user.name = name.strip()
-        if email:
-            user.email = email.strip().lower()
         user.validate()
+        user.format_data()
         UserRepository.save(user)
         return user
 
