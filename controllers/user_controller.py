@@ -1,51 +1,45 @@
-'''Nunca retorna dados, somente relatórios: Deu certo? O que deu certo?'''
+"""
+CONTROLLER: UserController
+Responsável por lidar com as requisições relacionadas aos usuários.
+"""
 from typing import Optional
-from models.user import User
+
+from utils.exceptions import DomainError
+
+from services.user_service import UserService
 
 class UserController:
     # ── Criação ───────────────────────────────────────────────────
+    @staticmethod
     def create(
-        self,
         name: str, 
         email: str,
     ) -> dict:
-        if User.find_by_email(email):
-            return {"success": False, "error": f"E-mail {email!r} já cadastrado."}
         try:
-            user = User(name=name.strip(), email=email.strip().lower()).save()
-            return {"success": True, "data": user}
-        except ValueError as exc:
-            return {"success": False, "error": str(exc)}
+            result = UserService.create(name=name, email=email)
+            return {"success": True, "data": result}
+        except DomainError as e:
+            return {"success": False, "error": str(e)}
 
     # ── Leitura ───────────────────────────────────────────────────
-    def get_by_id(self, user_id: int) -> dict:
-        user = User.find_by_id(user_id)
-        if user is None:
-            return {"success": False, "error": f"Usuário #{user_id} não encontrado."}
-        return {"success": True, "data": user}
+    @staticmethod
+    def list_all() -> dict:
+        result = UserService.list_all()
+        return {"success": True, "data": result}
 
-    def list_all(self) -> dict:
-        users = User.all()
-        return {"success": True, "data": users}
-
-    def update(self, user_id: int, name: Optional[str] = None, email: Optional[str] = None) -> dict:
-        user = User.find_by_id(user_id)
-        if user is None:
-            return {"success": False, "error": f"Usuário #{user_id} não encontrado."}
-        if name:
-            user.name = name.strip()
-        if email:
-            user.email = email.strip()
+    @staticmethod
+    def update(user_id: int, name: Optional[str], email: Optional[str]) -> dict:
         try:
-            user.save()
-            return {"success": True, "data": user}
-        except ValueError as exc:
-            return {"success": False, "error": str(exc)}
+            result = UserService.update(user_id, name, email)
+            return {"success": True, "data": result}
+        except DomainError as e:
+            return {"success": False, "error": str(e)}
     
     # ── Remoção ───────────────────────────────────────────────────
-    def delete(self, user_id: int) -> dict:
-        user = User.find_by_id(user_id)
-        if user is None:
-            return {"success": False, "error": f"Usuário #{user_id} não encontrado."}
-        result = user.delete()
-        return {"success": True, "data": f"Usuário #{user_id} {result.value} com sucesso."}
+    @staticmethod
+    def delete(user_id: int) -> dict:
+        try:
+            result = UserService.remove(user_id)
+            return {"success": True, "data": f"Usuário #{user_id} {result.value} com sucesso."}
+        except DomainError as e:
+            return {"success": False, "error": str(e)}

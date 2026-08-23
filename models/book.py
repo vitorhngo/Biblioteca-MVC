@@ -1,97 +1,52 @@
+"""
+MODEL: Book
+Responsável pela lógica de dados e regras de negócio do livro.
+"""
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
-import database.db as db
-import datamodels.exceptions as exc
-import datamodels.enums as Enum
-from models.loan import Loan
+from utils.exceptions import DomainError, BookNotFoundError
+from utils.constants import DB_DATE_FORMAT
+
+from repositories.book_repository import BookRepository
 
 @dataclass
 class Book:
-    '''Representação abstrata de um livro'''
     title: str
     author: str
     year: int
-    image: str
     amount: int
     active: bool = True
     id: Optional[int] = None
-    created_at: Optional[str] = None
+    image: Optional[str] = None
+    created_at: Optional[str] = datetime.now().strftime(DB_DATE_FORMAT)
     updated_at: Optional[str] = None
 
-    # ── Validação ────────────────────────────────────────────────
+    # ── Úteis ────────────────────────────────────────────────
     def validate(self):
         if not self.title.strip():
-            raise ValueError("Título não pode ser vazio.")
+            raise DomainError("Título não pode ser vazio.")
         if not len(str(self.year)) == 4 :
-            raise ValueError("Ano inválido.")
+            raise DomainError("Ano inválido.")
 
-    # ── Persistência ─────────────────────────────────────────────
-    def save(self) -> "Book":
-        self.validate()
-        if self.id is None:
-            self.id = db.write("books", {
-            "title": self.title,
-            "author": self.author,
-            "year": self.year,
-            "image": self.image,
-            "amount": self.amount,
-            "active": self.active
-            }
-        )
-        else:
-            db.update("books", self.id, {
-            "title": self.title,
-            "author": self.author,
-            "year": self.year,
-            "image": self.image,
-            "amount": self.amount,
-            "active": self.active,
-            }
-        )
+    def decrease_amount(self):
+        if self.amount < 1: return
+        self.amount -= 1
+
+    def format_data(self) -> Book:
+        self.title = self.title.strip()
+        self.author = self.author.strip()
         return self
-
-    def delete(self) -> Enum.DeleteResult:
-        if self.id is None:
-            raise RuntimeError("Livro não foi salvo ainda.")
-        if Loan.all_active_for_book(self.id):
-            self.deactivate()
-            return Enum.DeleteResult.DEACTIVATED
-        db.delete("books", self.id)
-        self.id = None
-        return Enum.DeleteResult.DELETED
-
-    def deactivate(self) -> None:
-        if self.id is None:
-            raise RuntimeError("Livro não foi salvo ainda.")
-        
-        if self.active == False: return
-        self.active = False
-        self.save()
 
     # ── Consultas ─────────────────────────────────────────────────
     @classmethod
     def is_available(cls, book_id: int) -> bool:
-        book = cls.find_by_id(book_id)
+        """Verifica se o livro especificado tem quantidade suficiente ou está ativo"""
+        book_data = BookRepository.find_by_id(book_id)
+        if book_data is None:
+            raise BookNotFoundError()
+        book = cls(**book_data)
         if book is None:
-            raise ValueError("O livro não foi encontrado")
-        return book.amount > 0
-
-    @classmethod
-    def find_by_id(cls, book_id: int) -> Optional["Book"]:
-        data = db.get("books", book_id)
-        return cls._from_data(data) if data else None
-
-    # ── Auxiliar ──────────────────────────────────────────────────
-    @classmethod
-    def _from_data(cls, data) -> "Book":
-        '''Reconstrói o objeto com dados vindos do banco'''
-        return cls(
-            id=data["id"],
-            title=data["title"],
-            author=data["author"],
-            year=data["year"],
-            image=data["image"],
-            amount=data["amount"],
-            active=data["active"]
-        )
+            raise BookNotFoundError()
+        return book.amount > 0 or book.active

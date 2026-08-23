@@ -1,38 +1,42 @@
-'''Nunca retorna dados, somente relatórios: Deu certo? O que deu certo?'''
+"""
+CONTROLLER: BookController
+Responsável por lidar com as requisições relacionadas aos livros.
+"""
+from typing import Optional
 
-from models.book import Book
-from models.user import User
+from utils.exceptions import DomainError, BookNotFoundError
 
-import datamodels.exceptions as exc
+from services.book_service import BookService
 
 class BookController:
-
     # ── Criação ───────────────────────────────────────────────────
+    @staticmethod
     def create(
-        self,
         title: str, 
         author: str, 
         year: int,
-        image: str,
-        amount: int
+        image: Optional[str] = None,
+        amount: int = 1
     ) -> dict:
         try:
-            book = Book(
-                title=title.strip(), 
-                author=author.strip(), 
-                year=year,
-                image=image,
-                amount=amount
-            ).save()
-            return {"success": True, "data": book}
-        except ValueError as exc:
-            return {"success": False, "error": str(exc)}
+            result = BookService().create(title=title, author=author, year=year, image=image, amount=amount)
+            return {"success": True, "data": result}
+        except DomainError as e:
+            return {"success": False, "error": str(e)}
+        
+    @staticmethod
+    def update(book_id: int, info_update: dict[str, any]) -> dict: # type: ignore
+        try:
+            result = BookService().update(book_id, info_update)
+            return {"success": True, "data": result}
+        except DomainError as e:
+            return {"success": False, "error": str(e)}
         
     # ── Remoção ───────────────────────────────────────────────────
-    def delete(self, book_id: int) -> dict:
-        book = Book.find_by_id(book_id)
-        if book is None:
+    @staticmethod
+    def delete(book_id: int) -> dict:
+        try:
+            result = BookService().remove(book_id)
+            return {"success": True, "data": f"Livro #{book_id} {result.value} com sucesso."}
+        except BookNotFoundError:
             return {"success": False, "error": f"Livro #{book_id} não encontrado."}
-        result = book.delete()
-        return {"success": True, "data": f"Livro #{book_id} {result.value} com sucesso."}
-        

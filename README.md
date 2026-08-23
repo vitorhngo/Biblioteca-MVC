@@ -34,7 +34,7 @@ biblioteca-mvc/
 ├── database/
 │   ├── data.json
 │   └── db.py
-├── datamodels/
+├── utils/
 │   ├── enums.py
 │   └── exceptions.py
 ├── models/
@@ -47,7 +47,7 @@ biblioteca-mvc/
 
 - **`models/`** — entidades do domínio (`Book`, `Loan`, `User`) e todas as regras de negócio.
 - **`controllers/`** — orquestram a comunicação entre a View (implementada em outra branch) e os Models, um controller por entidade.
-- **`datamodels/`** — tipos de apoio ao domínio: `enums.py` (enumeradores usados pelos models, ex: status de empréstimo) e `exceptions.py` (exceções customizadas do domínio, ex: `LoanActiveError`).
+- **`utils/`** — tipos de apoio ao domínio: `enums.py` (enumeradores usados pelos models, ex: status de empréstimo) e `exceptions.py` (exceções customizadas do domínio, ex: `LoanActiveError`).
 - **`database/`** — camada de persistência (`db.py`) e o arquivo de dados (`data.json`), isolada da lógica de negócio dos Models.
 
 ## 🌿 Branches e Views
@@ -104,7 +104,7 @@ pyside6-uic designer_files/tela_principal.ui -o views/ui_tela_principal.py
 | **View** | branches específicas | Exibição de dados e captura de eventos do usuário | Regras de negócio |
 | **Controller** | `controllers/` | Orquestração entre View e Model | Regras de negócio complexas |
 | **Persistência** | `database/` | Leitura/escrita dos dados | Regras de negócio |
-| **Apoio ao domínio** | `datamodels/` | Enums e exceptions usados pelos Models | Lógica de persistência ou exibição |
+| **Apoio ao domínio** | `utils/` | Enums e exceptions usados pelos Models | Lógica de persistência ou exibição |
 
 Um princípio seguido no projeto: se uma regra de negócio puder ser testada isoladamente, chamando apenas o Model (sem instanciar Controller ou View), ela está na camada correta.
 
