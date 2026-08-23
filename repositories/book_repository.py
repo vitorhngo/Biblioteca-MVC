@@ -1,3 +1,7 @@
+"""
+REPOSITORY: BookRepository
+Responsável por interagir com o banco de dados para operações relacionadas ao livro.
+"""
 import database.db as db
 
 class BookRepository:

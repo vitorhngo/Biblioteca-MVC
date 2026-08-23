@@ -1,10 +1,14 @@
+"""
+SERVICE: BookService
+Responsável por coordenar a lógica de negócio do livro, interagindo com o repositório e o modelo.
+"""
 from utils import enums
-from utils.exceptions import DomainError, BookNotFoundError
+from utils.exceptions import BookNotFoundError
 
 from repositories.book_repository import BookRepository
+from repositories.loan_repository import LoanRepository
 
 from models.book import Book
-from models.loan import Loan
 
 class BookService:
     @staticmethod
@@ -15,21 +19,29 @@ class BookService:
             amount: int = 1,
             image = None
         ) -> Book:
-        book = Book(title=title, author=author, year=year, amount=amount, image=image)
-        book.register()
+        book = Book(
+            title=title,
+            author=author,
+            year=year,
+            amount=amount,
+            image=image
+        )
+        book.validate()
+        BookRepository.save(book)
         return book
 
     @staticmethod
     def remove(book_id: int) -> enums.DeleteResult:
-        book_data = BookRepository.find_by_id(book_id)
-        if book_data is None:
+        data = BookRepository.find_by_id(book_id)
+        if data is None:
             raise BookNotFoundError()
         
-        book = Book(**book_data)
+        book = Book(**data)
 
-        if Loan.all_active_for_book(book_id):
-            book.deactivate()
+        if LoanRepository.all_active_for_book(book_id):
+            book.active = False
+            BookRepository.save(book)
             return enums.DeleteResult.DEACTIVATED
-
-        book.delete()
+        
+        BookRepository.delete(book)
         return enums.DeleteResult.DELETED

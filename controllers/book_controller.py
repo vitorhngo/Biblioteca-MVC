@@ -1,3 +1,7 @@
+"""
+CONTROLLER: BookController
+Responsável por lidar com as requisições relacionadas aos livros.
+"""
 from typing import Optional
 
 from utils.exceptions import DomainError, BookNotFoundError

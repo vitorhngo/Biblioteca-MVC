@@ -1,3 +1,7 @@
+"""
+REPOSITORY: UserRepository
+Responsável por interagir com o banco de dados para operações relacionadas ao usuário.
+"""
 import database.db as db
 
 class UserRepository:

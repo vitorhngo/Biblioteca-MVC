@@ -1,3 +1,7 @@
+"""
+CONTROLLER: LoanController
+Responsável por lidar com as requisições relacionadas aos empréstimos.
+"""
 from datetime import date
 
 from utils.exceptions import DomainError

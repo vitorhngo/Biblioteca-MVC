@@ -1,4 +1,7 @@
-'''Nunca retorna dados, somente relatórios: Deu certo? O que deu certo?'''
+"""
+CONTROLLER: UserController
+Responsável por lidar com as requisições relacionadas aos usuários.
+"""
 from typing import Optional
 
 from utils.exceptions import DomainError

@@ -1,11 +1,13 @@
+"""
+MODEL: Loan
+Responsável pela lógica de dados e regras de negócio do empréstimo.
+"""
 from dataclasses import dataclass
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 
 from utils.exceptions import DomainError
 from utils.constants import DUE_DATE_LIMIT, DB_DATE_FORMAT
-
-from repositories.loan_repository import LoanRepository
 
 VALID_STATUSES  = ("active", "expired")
 STATUS_LABELS = {
@@ -20,7 +22,7 @@ class Loan:
     status: str = "active"
     id: Optional[int] = None
     due_date: Optional[date] = None
-    created_at: Optional[str] = None
+    created_at: Optional[str] = datetime.now().strftime(DB_DATE_FORMAT)
     updated_at: Optional[str] = None
 
     # ── Validação ────────────────────────────────────────────────
@@ -33,17 +35,6 @@ class Loan:
                 raise DomainError(f"A data de vencimento ultrapassa o limite de {DUE_DATE_LIMIT} dias")
             if self.due_date < date.strptime(self.created_at, DB_DATE_FORMAT):
                 raise DomainError(f"A data de vencimento não pode ser menor que a data de criação do empréstimo")
-        
-    def register(self):
-        self.validate()
-        LoanRepository.save(self)
-        return self
-    
-    def delete(self) -> None:
-        if self.id is None:
-            raise RuntimeError("Empréstimo não foi salvo ainda.")
-        LoanRepository.delete(self)
-        self.id = None
 
     # ── Propriedades de conveniência ──────────────────────────────
     @property
@@ -57,56 +48,3 @@ class Loan:
             and self.status != "active"
             and self.due_date < date.today()
         )
-
-    # ── Consultas ─────────────────────────────────────────────────
-    @classmethod
-    def find_by_id(cls, loan_id: int) -> Optional["Loan"]:
-        """Busca um empréstimo pelo seu ID. Retorna None se não encontrado."""
-        data = LoanRepository.find_by_id(loan_id)
-        return cls(**data) if data else None
-
-    @classmethod
-    def has_occurrence(cls, user_id: int, book_id: int) -> bool:
-        """Checa se há empréstimos associados ao usuário e livro especificados"""
-        data = LoanRepository.all(
-            filter_expression=lambda loan: loan["user_id"] == user_id and loan["book_id"] == book_id
-        )
-        return len(data) > 0
-    
-    @classmethod
-    def all(cls) -> list[Loan]:
-        """Retorna uma lista de empréstimos"""
-        data = LoanRepository.all()
-        return [cls(**loan) for loan in data]
-
-    @classmethod
-    def all_for_user(cls, user_id: int) -> list[Loan]:
-        """Retorna uma lista de empréstimos do usuário especificado"""
-        data = LoanRepository.all(
-            filter_expression=lambda loan: loan["user_id"] == user_id
-        )
-        return [cls(**loan) for loan in data]
-
-    @classmethod
-    def all_active_for_user(cls, user_id: int) -> list[Loan]:
-        '''Retorna uma lista de empréstimos ativos do usuário especificado'''
-        data = LoanRepository.all(
-            filter_expression=lambda loan: loan["user_id"] == user_id and loan["status"] == "active"
-        )
-        return [cls(**loan) for loan in data]
-
-    @classmethod
-    def all_for_book(cls, book_id: int) -> list[Loan]:
-        """Retorna uma lista de empréstimos do livro especificado"""
-        data = LoanRepository.all(
-            filter_expression=lambda loan: loan["book_id"] == book_id
-        )
-        return [cls(**loan) for loan in data]
-
-    @classmethod
-    def all_active_for_book(cls, book_id: int) -> list[Loan]:
-        '''Retorna uma lista de empréstimos ativos do livro especificado'''
-        data = LoanRepository.all(
-            filter_expression=lambda loan: loan["book_id"] == book_id and loan["status"] == "active"
-        )
-        return [cls(**loan) for loan in data]

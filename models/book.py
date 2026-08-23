@@ -1,7 +1,13 @@
+"""
+MODEL: Book
+Responsável pela lógica de dados e regras de negócio do livro.
+"""
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 from utils.exceptions import DomainError, BookNotFoundError
+from utils.constants import DB_DATE_FORMAT
 
 from repositories.book_repository import BookRepository
 
@@ -14,7 +20,7 @@ class Book:
     active: bool = True
     id: Optional[int] = None
     image: Optional[str] = None
-    created_at: Optional[str] = None
+    created_at: Optional[str] = datetime.now().strftime(DB_DATE_FORMAT)
     updated_at: Optional[str] = None
 
     # ── Úteis ────────────────────────────────────────────────
@@ -23,24 +29,6 @@ class Book:
             raise DomainError("Título não pode ser vazio.")
         if not len(str(self.year)) == 4 :
             raise DomainError("Ano inválido.")
-
-    def register(self):
-        self.validate()
-        BookRepository.save(self)
-        return self
-
-    def delete(self):
-        if self.id is None:
-            raise RuntimeError("Livro não foi salvo ainda.")
-        BookRepository.delete(self)
-        self.id = None
-
-    def deactivate(self) -> None:
-        if self.id is None:
-            raise RuntimeError("Livro não foi salvo ainda.")
-        if self.active == False: return
-        self.active = False
-        BookRepository.save(self)
 
     def decrease_amount(self):
         if self.amount < 1: return

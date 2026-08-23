@@ -28,7 +28,7 @@ def write(key: str, value: dict) -> None:
     data["lastrowid"] += 1
     data[key][data["lastrowid"]] = value
     data[key][data["lastrowid"]]["id"] = data["lastrowid"]
-    data[key][data["lastrowid"]]["created_at"] = datetime.now().strftime(DB_DATE_FORMAT)
+    #data[key][data["lastrowid"]]["created_at"] = datetime.now().strftime(DB_DATE_FORMAT)
     
     with open(JSON_FILE, "w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=4)

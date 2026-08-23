@@ -1,14 +1,18 @@
+"""
+SERVICE: LoanService
+Responsável por coordenar a lógica de negócio do empréstimo, interagindo com o repositório e o modelo.
+"""
 from datetime import date
 
 import utils.exceptions as exc
 from utils.constants import MAX_LOAN_PER_USER
 
+from repositories.loan_repository import LoanRepository
+from repositories.book_repository import BookRepository
+
 from models.user import User
 from models.book import Book
 from models.loan import Loan
-
-from repositories.loan_repository import LoanRepository
-from repositories.book_repository import BookRepository
 
 class LoanService:
     @staticmethod
@@ -21,7 +25,8 @@ class LoanService:
             user_id=user_id, 
             due_date=due_date
         )
-        loan.register()
+        loan.validate()
+        LoanRepository.save(loan)
         
         book.amount -= 1
         BookRepository.save(book)
@@ -30,25 +35,36 @@ class LoanService:
 
     @staticmethod
     def update(loan_id: int, due_date: date) -> Loan:
-        loan = Loan.find_by_id(loan_id)
-        if loan is None:
+        data = LoanRepository.find_by_id(loan_id)
+        if data is None:
             raise exc.LoanNotFoundError()
+        loan = Loan(**data)
         loan.due_date = due_date
-        loan.register()
+        loan.validate()
+        LoanRepository.save(loan)
         return loan
 
     @staticmethod
     def list_for_user(user_id: int) -> list[Loan]:
         if User.find_by_id(user_id) is None:
             raise exc.UserNotFoundError()
-        return Loan.all_for_user(user_id)
+        return [Loan(**data) for data in LoanRepository.all_for_user(user_id)]
 
     @staticmethod
     def delete(loan_id: int):
-        loan = Loan.find_by_id(loan_id)
-        if loan is None:
+        data = LoanRepository.find_by_id(loan_id)
+        if data is None:
             raise exc.LoanNotFoundError()
-        loan.delete()
+        loan = Loan(**data)
+        LoanRepository.delete(loan)
+
+    @staticmethod
+    def has_occurrence(user_id: int, book_id: int) -> bool:
+        """Checa se há empréstimos associados ao usuário e livro especificados"""
+        data = LoanRepository.all(
+                filter_expression=lambda loan: loan["user_id"] == user_id and loan["book_id"] == book_id
+            )
+        return len(data) > 0
 
     @staticmethod
     def _validate_loan_request(book_id: int, user_id: int, due_date: date) -> tuple[User, Book]:
@@ -62,13 +78,13 @@ class LoanService:
         
         book = Book(**book_data)
 
-        if book_data is None or book.amount <= 0 or not book.active:
+        if book.amount <= 0 or not book.active:
             raise exc.BookUnavailableError()
 
-        if len(Loan.all_for_user(user_id)) >= MAX_LOAN_PER_USER:
+        if len(LoanRepository.all_for_user(user_id)) >= MAX_LOAN_PER_USER:
             raise exc.UserMaxLoansReachedError()
 
-        if Loan.has_occurrence(user_id, book_id):
+        if LoanService.has_occurrence(user_id, book_id):
             raise exc.LoanAlreadyExistsError()
 
         return user, book
