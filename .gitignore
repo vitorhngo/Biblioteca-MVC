@@ -429,8 +429,6 @@ FodyWeavers.xsd
 *.msp
 
 __pycache__/
-views/
-main.py
 database/data.json
 debug/
 venv/
