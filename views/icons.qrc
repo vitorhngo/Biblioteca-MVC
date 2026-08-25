@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>icons/logo-icon.png</file>
+    <file>icons/logo-icon.jpg</file>
+    <file>icons/logo-complete.jpg</file>
     <file>icons/active-bell.png</file>
     <file>icons/deactive-bell.png</file>
     <file>icons/loan.png</file>

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMainWindow
 
-from views.app_ui import Ui_MainWindow
+from views.app_ui import Ui_MainWindow, QIcon
 
 from utils.constants import SOFTWARE_VERSION
 
@@ -10,7 +10,8 @@ class View(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setWindowTitle("Livros")
+        self.setWindowTitle("Biblioteca Cora Coralina")
+        self.setWindowIcon(QIcon(":/icons/icons/logo-icon-removebg-preview.png"))
 
         self.user = AppSession.current_user()
 

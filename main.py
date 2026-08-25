@@ -26,9 +26,9 @@ def main() -> None:
 
     app = QApplication(sys.argv)
 
-    login_dialog = LoginView()
+    login_view = LoginView()
 
-    if login_dialog.exec() == LoginView.Accepted: #ignore error "Accepted" is unknown
+    if login_view.exec() == LoginView.Accepted: #ignore error "Accepted" is unknown
         view = View()
         view.show()
         sys.exit(app.exec())
