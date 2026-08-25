@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QDialog
-from views.login_dialog_ui import Ui_Dialog  # Arquivo gerado pelo pyside6-uic
+from views.login_ui import Ui_Dialog  # Arquivo gerado pelo pyside6-uic
 #from controllers.user_controller import UserController
 
 from utils.constants import SOFTWARE_VERSION
