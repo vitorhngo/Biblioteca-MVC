@@ -13,32 +13,38 @@ from models.user import User
 from repositories.user_repository import UserRepository
 from repositories.loan_repository import LoanRepository
 
+from services.auth_service import AuthService
+
 class UserService:
     @staticmethod
     def create(
             name: str,
-            email: str
+            username: str,
+            password_plain: str
         ) -> User:
-        if UserRepository.find_by_email(email):
-            raise DomainError(f"E-mail {email!r} já cadastrado.")
-        user = User(name=name, email=email)
+        user = User(
+            name=name,
+            username=username,
+            password_hash=AuthService.hash_password(password_plain)
+        )
         user.validate()
         user.format_data()
+
+        if UserRepository.find_by_username(user.username):
+            raise DomainError(f"Nome de usuário {user.username!r} já cadastrado.")
+        
         UserRepository.save(user)
         return user
 
     @staticmethod
-    def update(user_id: int, info_update: dict[str, any]) -> User: # type: ignore
+    def update(user_id: int, name: str, password_plain: str) -> User: #type: ignore
         data = UserRepository.find_by_id(user_id)
         if data is None:
             raise UserNotFoundError()
 
-        for key, value in data.items():
-            new_value = info_update.get(key)
-            if new_value is not None and new_value != value:
-                    data[key] = new_value
-        
         user = User(**data)
+        user.name = name
+        user.password_hash = AuthService.hash_password(password_plain)
         user.validate()
         user.format_data()
         UserRepository.save(user)

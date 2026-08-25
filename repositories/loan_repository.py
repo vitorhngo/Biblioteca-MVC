@@ -34,7 +34,7 @@ class LoanRepository:
         return loan_data
 
     @staticmethod
-    def all(filter_expression=lambda loan: True):
+    def all(filter_by=lambda loan: True):
         """De acordo com o filtro especificado, retorna empréstimos cadastrados."""
         loans = []
         for k, v in db.read().items():
@@ -42,34 +42,34 @@ class LoanRepository:
             if not k == "loans": continue
             for _, loan in v.items():
                 if loan is None: continue
-                if not filter_expression(loan): continue
-                loans.append(loan)
+                if filter_by(loan):
+                    loans.append(loan)
         return loans
 
     @staticmethod
     def all_for_user(user_id: int) -> list[dict]:
         """Retorna uma lista de empréstimos do usuário especificado"""
         return LoanRepository.all(
-            filter_expression=lambda loan: loan["user_id"] == user_id
+            filter_by=lambda loan: loan["user_id"] == user_id
         )
 
     @staticmethod
     def all_active_for_user(user_id: int) -> list[dict]:
         '''Retorna uma lista de empréstimos ativos do usuário especificado'''
         return LoanRepository.all(
-            filter_expression=lambda loan: loan["user_id"] == user_id and loan["status"] == "active"
+            filter_by=lambda loan: loan["user_id"] == user_id and loan["status"] == "active"
         )
 
     @staticmethod
     def all_for_book(book_id: int) -> list[dict]:
         """Retorna uma lista de empréstimos do livro especificado"""
         return LoanRepository.all(
-            filter_expression=lambda loan: loan["book_id"] == book_id
+            filter_by=lambda loan: loan["book_id"] == book_id
         )
 
     @staticmethod
     def all_active_for_book(book_id: int) -> list[dict]:
         '''Retorna uma lista de empréstimos ativos do livro especificado'''
         return LoanRepository.all(
-            filter_expression=lambda loan: loan["book_id"] == book_id and loan["status"] == "active"
+            filter_by=lambda loan: loan["book_id"] == book_id and loan["status"] == "active"
         )
