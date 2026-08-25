@@ -29,25 +29,21 @@ class UserRepository:
         return user_data
 
     @staticmethod
-    def find_by_email(email: str):
-        """Busca um usuário pelo seu e-mail. Retorna None se não encontrado."""
-        for k, v in db.read().items():
-            if not type(v).__name__ == "dict": continue
-            if not k == "users": continue
-            for _, user in v.items():
-                if user is None: continue
-                if user["email"] != email.lower(): continue
-                return user
-        return None
-
-    @staticmethod
-    def all():
-        """Retorna todos os usuários cadastrados."""
+    def all(filter_by=lambda user: True):
+        """De acordo com o filtro especificado, retorna usuários cadastrados. Se tiver no filtro retorna o usuário."""
         users = []
         for k, v in db.read().items():
             if not type(v).__name__ == "dict": continue
             if not k == "users": continue
             for _, user in v.items():
                 if user is None: continue
-                users.append(user)
+                if filter_by(user):
+                    users.append(user)
         return users
+
+    @staticmethod
+    def find_by_username(username: str) -> dict | None:
+        matches = UserRepository.all(
+            filter_by=lambda user: user["username"] == username
+        )
+        return matches[0] if matches else None

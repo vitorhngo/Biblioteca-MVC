@@ -433,3 +433,5 @@ views/
 main.py
 database/data.json
 debug/
+venv/
+build_ui.bat

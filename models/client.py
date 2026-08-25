@@ -1,21 +1,20 @@
 """
-MODEL: User
-Responsável pela lógica regras de negócio do usuário.
+MODEL: Client
+Responsável pela lógica regras de negócio do cliente.
 """
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
+import re
 
 from utils.exceptions import DomainError
 from utils.constants import DB_DATE_FORMAT
-from utils.enums import UserRole
 
 @dataclass
-class User:
-    username: str
-    password_hash: str
+class Client:
     name: str
-    role = UserRole.OP
+    email: str
+    registered_by: int
     active: bool = True
     id: Optional[int] = None
     created_at: Optional[str] = datetime.now().strftime(DB_DATE_FORMAT)
@@ -27,17 +26,11 @@ class User:
             raise DomainError("Nome não pode ser numérico.")
         if not self.name.strip():
             raise DomainError("Nome não pode ser vazio.")
-
-        if self.username.isdigit():
-            raise DomainError("Nome de usuário não pode ser numérico.")
-        if not self.username.strip():
-            raise DomainError("Nome de usuário não pode ser vazio.")
         
-        if not self.password_hash.strip():
-            raise DomainError("Senha não pode ser vazio.")
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email):
+            raise DomainError(f"E-mail inválido: {self.email!r}")
 
-    def format_data(self) -> "User":
-        self.name = self.name.strip().upper()
-        self.username = self.username.strip().upper()
-        self.password_hash = self.password_hash.strip()
+    def format_data(self) -> "Client":
+        self.name = self.name.strip()
+        self.email = self.email.strip().lower()
         return self

@@ -17,8 +17,9 @@ STATUS_LABELS = {
 
 @dataclass
 class Loan:
-    user_id: int
+    client_id: int
     book_id: int
+    registered_by: int
     status: str = "active"
     id: Optional[int] = None
     due_date: Optional[date] = None
@@ -30,15 +31,15 @@ class Loan:
         if self.status not in VALID_STATUSES:
             raise DomainError(f"Status inválido: {self.status!r}. Use: {VALID_STATUSES}")
         if self.due_date and self.created_at:
-            days = (self.due_date - date.strptime(self.created_at, DB_DATE_FORMAT)).days
+            days = (self.due_date - datetime.strptime(self.created_at, DB_DATE_FORMAT)).days
             if days > DUE_DATE_LIMIT:
                 raise DomainError(f"A data de vencimento ultrapassa o limite de {DUE_DATE_LIMIT} dias")
-            if self.due_date < date.strptime(self.created_at, DB_DATE_FORMAT):
+            if self.due_date < datetime.strptime(self.created_at, DB_DATE_FORMAT):
                 raise DomainError(f"A data de vencimento não pode ser menor que a data de criação do empréstimo")
 
-    def format_data(self) -> Loan:
+    def format_data(self) -> "Loan":
         if self.due_date and isinstance(self.due_date, str):
-            self.due_date = date.strptime(self.due_date, DB_DATE_FORMAT)
+            self.due_date = datetime.strptime(self.due_date, DB_DATE_FORMAT)
         return self
 
     # ── Propriedades de conveniência ──────────────────────────────

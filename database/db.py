@@ -11,6 +11,7 @@ JSON_FILE = DATA_DIR / "data.json"
 data_template = {
     "lastrowid": 0,
     "users": {},
+    "clients": {},
     "books": {},
     "loans": {}
 }

@@ -12,12 +12,19 @@ class LoanController:
     '''Representação abstrata de um empréstimo'''
     @staticmethod
     def create(
-        user_id: int, 
+        registered_by: int, 
+        client_id: int,
         book_id: int,
         due_date: date
+
     ) -> dict:
         try:
-            result = LoanService.create(book_id, user_id, due_date)
+            result = LoanService.create(
+                registered_by,
+                book_id,
+                client_id,
+                due_date
+            )
             return {"success": True, "data": result}
         except DomainError as e:
             return {"success": False, "error": str(e)}
@@ -31,12 +38,12 @@ class LoanController:
             return {"success": False, "error": str(e)}
 
     @staticmethod
-    def list_for_user(
+    def list_for_client(
         user_id: int,
     ) -> dict:
         """Lista todos os empréstimos de um usuário"""
         try:
-            result = LoanService.list_for_user(user_id)
+            result = LoanService.list_for_client(user_id)
             return {"success": True, "data": result}
         except DomainError as e:
             return {"success": False, "error": str(e)}

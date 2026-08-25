@@ -9,25 +9,26 @@ from utils.constants import MAX_LOAN_PER_USER
 
 from repositories.loan_repository import LoanRepository
 from repositories.book_repository import BookRepository
-from repositories.user_repository import UserRepository
+from repositories.client_repository import ClientRepository
 
-from models.user import User
 from models.book import Book
 from models.loan import Loan
 
 class LoanService:
     @staticmethod
-    def create(book_id: int, user_id: int, due_date: date) -> Loan:
-        book = LoanService._validate_loan_request(book_id, user_id, due_date)
-
+    def create(registered_by: int, book_id: int, client_id: int, due_date: date) -> Loan:
         #XXX: FALTA ATOMICIDADE: Se o save do loan falhar, o amount do livro não deve ser decrementado.
         loan = Loan(
+            registered_by=registered_by,
             book_id=book_id, 
-            user_id=user_id, 
+            client_id=client_id, 
             due_date=due_date
         )
         loan.validate()
         loan.format_data()
+
+        book = LoanService._validate_loan_request(book_id, client_id, due_date)
+
         LoanRepository.save(loan)
         
         book.amount -= 1
@@ -48,10 +49,10 @@ class LoanService:
         return loan
 
     @staticmethod
-    def list_for_user(user_id: int) -> list[Loan]:
-        if UserRepository.find_by_id(user_id) is None:
-            raise exc.UserNotFoundError()
-        return [Loan(**data) for data in LoanRepository.all_for_user(user_id)]
+    def list_for_client(client_id: int) -> list[Loan]:
+        if ClientRepository.find_by_id(client_id) is None:
+            raise exc.ClientNotFoundError()
+        return [Loan(**data) for data in LoanRepository.all_for_user(client_id)]
 
     @staticmethod
     def delete(loan_id: int):
@@ -62,36 +63,36 @@ class LoanService:
         LoanRepository.delete(loan)
 
     @staticmethod
-    def has_occurrence(user_id: int, book_id: int) -> bool:
+    def has_occurrence(client_id: int, book_id: int) -> bool:
         """Checa se há empréstimos associados ao usuário e livro especificados"""
         data = LoanRepository.all(
-                filter_expression=lambda loan: loan["user_id"] == user_id and loan["book_id"] == book_id
+                filter_by=lambda loan: loan["client_id"] == client_id and loan["book_id"] == book_id
             )
         return len(data) > 0
 
     @staticmethod
-    def _validate_loan_request(book_id: int, user_id: int, due_date: date) -> Book:
-        user_data = UserRepository.find_by_id(user_id)
-        if user_data is None:
-            raise exc.UserNotFoundError()
-        if not user_data.get("active", True):
-            raise exc.UserDeactiveError()
+    def _validate_loan_request(book_id: int, client_id: int, due_date: date) -> Book:
+        client_data = ClientRepository.find_by_id(client_id)
+        if client_data is None:
+            raise exc.ClientNotFoundError()
+        if not client_data.get("active", True):
+            raise exc.ClientInactiveError()
 
         book_data = BookRepository.find_by_id(book_id)
         if book_data is None:
             raise exc.BookNotFoundError()
         if not book_data.get("active", True):
-            raise exc.BookDeactiveError()
+            raise exc.BookInactiveError()
         
         book = Book(**book_data)
 
         if book.amount <= 0:
             raise exc.BookUnavailableError()
 
-        if len(LoanRepository.all_for_user(user_id)) >= MAX_LOAN_PER_USER:
-            raise exc.UserMaxLoansReachedError()
+        if len(LoanRepository.all_for_user(client_id)) >= MAX_LOAN_PER_USER:
+            raise exc.ClientMaxLoansReachedError()
 
-        if LoanService.has_occurrence(user_id, book_id):
+        if LoanService.has_occurrence(client_id, book_id):
             raise exc.LoanAlreadyExistsError()
 
         return book
