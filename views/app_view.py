@@ -11,10 +11,10 @@ class View(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("Biblioteca Cora Coralina")
-        self.setWindowIcon(QIcon(":/icons/icons/logo-icon-removebg-preview.png"))
+        self.setWindowIcon(QIcon(":/icons/icons/logo-icon.png"))
 
         self.user = AppSession.current_user()
 
-        self.user_name_label.setText(f"<b>{self.user.name}</b><br>{self.user.role.value.capitalize()}")
-        self.version_label.setText(SOFTWARE_VERSION)
+        self.label_user_name.setText(f"<b>{self.user.name}</b><br>{self.user.role.capitalize()}")
+        self.label_version.setText(SOFTWARE_VERSION)
     

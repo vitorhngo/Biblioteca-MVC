@@ -15,7 +15,7 @@ class User:
     username: str
     password_hash: str
     name: str
-    role = UserRole.OP
+    role: str
     active: bool = True
     id: Optional[int] = None
     created_at: Optional[str] = datetime.now().strftime(DB_DATE_FORMAT)
@@ -35,6 +35,9 @@ class User:
         
         if not self.password_hash.strip():
             raise DomainError("Senha não pode ser vazio.")
+
+        if not self.role in UserRole:
+            raise DomainError("Cargo de usuário inválido")
 
     def format_data(self) -> "User":
         self.name = self.name.strip().upper()

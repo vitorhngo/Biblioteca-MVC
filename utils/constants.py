@@ -1,4 +1,4 @@
-SOFTWARE_VERSION = "0.0.0"
+SOFTWARE_VERSION = "0.0.1"
 
 DUE_DATE_LIMIT = 31 # Em dias
 DB_DATE_FORMAT = "%d/%m/%Y, %H:%M:%S"

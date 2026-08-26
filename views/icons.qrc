@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>icons/logo-complete.png</file>
+    <file>icons/gear.png</file>
     <file>icons/logo-icon.png</file>
     <file>icons/logo-icon.jpg</file>
     <file>icons/logo-complete.jpg</file>

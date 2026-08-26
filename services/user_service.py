@@ -20,12 +20,14 @@ class UserService:
     def create(
             name: str,
             username: str,
-            password_plain: str
+            password_plain: str,
+            role: str
         ) -> User:
         user = User(
             name=name,
             username=username,
-            password_hash=AuthService.hash_password(password_plain)
+            password_hash=AuthService.hash_password(password_plain),
+            role=role
         )
         user.validate()
         user.format_data()

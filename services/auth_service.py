@@ -1,4 +1,3 @@
-# services/auth_service.py
 import bcrypt
 
 import utils.exceptions as exc

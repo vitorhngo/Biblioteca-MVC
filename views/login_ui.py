@@ -216,6 +216,6 @@ class Ui_Dialog(object):
         self.label_username.setText(QCoreApplication.translate("Dialog", u"<html><head/><body><p><span style=\" font-weight:600;\">Nome </span><span style=\" color:#ff0000;\">*</span></p></body></html>", None))
         self.label_pswd.setText(QCoreApplication.translate("Dialog", u"<html><head/><body><p><span style=\" font-weight:600;\">Senha </span><span style=\" color:#ff0000;\">*</span></p></body></html>", None))
         self.label_error.setText(QCoreApplication.translate("Dialog", u"Erro", None))
-        self.label_version.setText(QCoreApplication.translate("Dialog", u"v0.0.1", None))
+        self.label_version.setText(QCoreApplication.translate("Dialog", u"v0.0.0", None))
     # retranslateUi
 

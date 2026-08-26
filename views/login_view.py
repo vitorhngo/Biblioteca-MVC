@@ -13,7 +13,7 @@ class LoginView(QDialog):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowIcon(QIcon(":/icons/icons/logo-icon-removebg-preview.png"))
+        self.setWindowIcon(QIcon(":/icons/icons/logo-icon.png"))
 
         # Configurações iniciais
         self.ui.label_error.setText("")
@@ -21,6 +21,8 @@ class LoginView(QDialog):
 
         # Conectar botões aos métodos
         self.ui.btn_login.clicked.connect(self.handle_login)
+
+        AuthController.create_adm_user()
 
 
     def handle_login(self):
@@ -40,27 +42,3 @@ class LoginView(QDialog):
             AppSession.login(result["data"])
         else:
             self.ui.label_error.setText(result["error"])
-
-        '''
-        # Busca a lista de usuários através do UserController
-        response = UserController.list_all()
-
-        if response["success"]:
-            users = response["data"]
-            # Valida se existe algum usuário com nome e password correspondentes
-            authenticated_user = next(
-                (
-                    u
-                    for u in users
-                    if u.get("name") == username and u.get("password") == password
-                ),
-                None,
-            )
-
-            if authenticated_user:
-                self.accept()  # Fecha a tela de login confirmando o acesso (QDialog.Accepted)
-            else:
-                self.ui.label_error.setText("Usuário ou e-mail incorretos.")
-        else:
-            self.ui.label_error.setText("Erro ao conectar com a base de dados.")
-        '''

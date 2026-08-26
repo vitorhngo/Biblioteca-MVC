@@ -6,5 +6,4 @@ class DeleteResult(Enum):
 
 class UserRole(Enum):
     ADMIN = "admin"
-    MANAGER = "gerente"
     OP = "operador"
